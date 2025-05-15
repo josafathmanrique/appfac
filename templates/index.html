@@ -1,1 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector de Archivos | XML/PDF a Excel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #f8f9fa;
+            --text: #2b2d42;
+            --light-text: #f8f9fa;
+            --background: #ffffff;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7ff;
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--primary), #7209b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #6c757d;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .info-text {
+            background-color: #e2f0fd;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .converter-card {
+            background: var(--background);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .converter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .upload-area {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .file-upload {
+            position: relative;
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.03);
+        }
+
+        .file-upload i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .file-upload h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .file-upload p {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+        }
+
+        .optional-badge {
+            background-color: #6c757d;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .file-label:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .file-name {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .spinner {
+            border: 4px solid rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .alert-error {
+            background-color: #fff0f0;
+            color: #dc3545;
+            border: 1px solid #f8d7da;
+        }
+
+        .alert-success {
+            background-color: #f0fff4;
+            color: #28a745;
+            border: 1px solid #d4edda;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .converter-card {
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-file-export"></i>
+            </div>
+            <h1>Lector de Archivos</h1>
+            <p class="subtitle">Convierte tus archivos XML o PDF a Excel estructurado</p>
+            
+            <div class="info-text">
+                <i class="fas fa-info-circle"></i> Puedes subir solo un archivo (XML o PDF)
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="converter-card">
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="upload-area">
+                    <div class="file-upload" id="xmlUpload">
+                        <i class="fas fa-file-code"></i>
+                        <h3>Archivo XML <span class="optional-badge">Opcional</span></h3>
+                        <p>Arrastra tu archivo XML aquí o haz clic para seleccionar</p>
+                        <input type="file" name="xml_file" id="xmlFile" class="file-input" accept=".xml">
+                        <label for="xmlFile" class="file-label">
+                            <i class="fas fa-upload"></i> Seleccionar archivo
+                        </label>
+                        <div class="file-name" id="xmlFileName">Ningún archivo seleccionado</div>
+                    </div>
+
+                    <div class="file-upload" id="pdfUpload">
+                        <i class="fas fa-file-pdf"></i>
+                        <h3>Archivo PDF <span class="optional-badge">Opcional</span></h3>
+                        <p>Arrastra tu archivo PDF aquí o haz clic para seleccionar</p>
+                        <input type="file" name="pdf_file" id="pdfFile" class="file-input" accept=".pdf">
+                        <label for="pdfFile" class="file-label">
+                            <i class="fas fa-upload"></i> Seleccionar archivo
+                        </label>
+                        <div class="file-name" id="pdfFileName">Ningún archivo seleccionado</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                    <i class="fas fa-cogs"></i> Procesar Archivos
+                </button>
+
+                <div class="loading" id="loadingIndicator">
+                    <div class="spinner"></div>
+                    <p>Procesando tus archivos, por favor espera...</p>
+                </div>
+            </form>
+        </div>
+
+        <footer>
+            <p> 2025 Lector de archivos</p>
+        </footer>
+    </div>
+
+    <script>
+        // Habilitar botón solo cuando hay al menos un archivo seleccionado
+        function checkFiles() {
+            const xmlFile = document.getElementById('xmlFile').files.length > 0;
+            const pdfFile = document.getElementById('pdfFile').files.length > 0;
+            document.getElementById('submitBtn').disabled = !(xmlFile || pdfFile);
+        }
+
+        // Mostrar nombres de archivos seleccionados
+        document.getElementById('xmlFile').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
+            document.getElementById('xmlFileName').textContent = fileName;
+            document.getElementById('xmlUpload').style.borderColor = '#4361ee';
+            checkFiles();
+        });
+        
+        document.getElementById('pdfFile').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Ningún archivo seleccionado';
+            document.getElementById('pdfFileName').textContent = fileName;
+            document.getElementById('pdfUpload').style.borderColor = '#4361ee';
+            checkFiles();
+        });
+        
+        // Mostrar spinner durante el procesamiento
+        document.getElementById('uploadForm').addEventListener('submit', function() {
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('loadingIndicator').style.display = 'block';
+        });
+        
+        // Drag and drop functionality
+        const uploadSections = document.querySelectorAll('.file-upload');
+        
+        uploadSections.forEach(section => {
+            section.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                section.style.borderColor = 'var(--primary)';
+                section.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
+            });
+            
+            section.addEventListener('dragleave', () => {
+                section.style.borderColor = '#dee2e6';
+                section.style.backgroundColor = '';
+            });
+            
+            section.addEventListener('drop', (e) => {
+                e.preventDefault();
+                section.style.borderColor = '#dee2e6';
+                section.style.backgroundColor = '';
+                
+                const files = e.dataTransfer.files;
+                if (files.length && files[0].type.match(/(xml|pdf)/)) {
+                    const input = section.querySelector('.file-input');
+                    input.files = files;
+                    
+                    const fileName = files[0].name;
+                    const fileNameElement = section.querySelector('.file-name');
+                    fileNameElement.textContent = fileName;
+                    
+                    section.style.borderColor = 'var(--primary)';
+                    checkFiles();
+                    
+                    // Disparar evento change manualmente
+                    const event = new Event('change');
+                    input.dispatchEvent(event);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
